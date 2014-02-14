@@ -114,15 +114,18 @@ class MWOAuth(object):
             if k in ('title', 'text', 'summary'):
                 # title,  text and summary values in the request
                 # should be utf-8 encoded
+                if isinstance(v, unicode):
+                    v = v.encode('utf-8')
 
                 part = (k,
-                        (None, v.encode('utf-8'),
+                        (None, v,
                          'text/plain; charset=UTF-8',
                          {'Content-Transfer-Encoding': '8bit'}
                          )
                         )
             else:
                 part = (k, (None, v))
+
             partlist.append(part)
 
         return Request(url=url, files=partlist).prepare()
@@ -136,11 +139,10 @@ class MWOAuth(object):
 
         size = sum([sys.getsizeof(v) for k, v in api_query.iteritems()])
 
-        if size > (1024 * 8):
-            # if request is bigger than 8 kB (the limit is somewhat arbitrary,
+        if size > (1024 * 4):
+            # if request is bigger than 4 kB (the limit is somewhat arbitrary,
             # see https://www.mediawiki.org/wiki/API:Edit#Large_texts) then
             # transmit as multipart message
-
             req = self._prepare_long_request(url=url + "/api.php?",
                                              api_query=api_query
                                              )
